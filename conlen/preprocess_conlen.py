@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 import scipy.io as io
-from scripts.gen.hrf import hrf_convolve
+from conlen.hrf import hrf_convolve
 
 regnum = re.compile('(.+)_region([0-9]+)')
 runnum = re.compile('run([0-9]+)')
@@ -224,6 +224,7 @@ ling_preds = [
     'embdlen',
     'noF',
     'noFlen',
+    'noFlenlog1p',
     'noFdr',
     'noFdrv',
     'yesJ'
@@ -250,6 +251,7 @@ ling_preds_nojab = [
     'embdlen',
     'noF',
     'noFlen',
+    'noFlenlog1p',
     'noFdr',
     'noFdrv',
     'yesJ'
@@ -258,7 +260,9 @@ ling_preds_nojab = [
 conlen_itemmeasures = pd.read_csv(
     cl_predictor_path + '/conlen2fmri.wsj02to21-gcg15-nol-prtrm-3sm-synproc-+c_+u_+b5000_parsed.dlt.lc.unigram.5-kenlm.all-itemmeasures',
     sep=' '
-)[ling_preds]
+)
+conlen_itemmeasures['noFlenlog1p'] = np.log(conlen_itemmeasures['noFlen'].values + 1)
+conlen_itemmeasures = conlen_itemmeasures[ling_preds]
 conlen_itemmeasures.loc[conlen_itemmeasures.cond == 'JAB', ling_preds_nojab] = 0
 conlen_itemmeasures = pd.merge(conlen_itemmeasures, df_pmi[['PMI', 'docid', 'sentpos', 'cond', 'conlen', 'condcode']],
                                how='left', on=['docid', 'sentpos', 'cond', 'conlen', 'condcode'])
@@ -337,13 +341,6 @@ for exp in ['1', '2']:
                     sep='-'
                 )
                 df_response.reset_index(drop=True, inplace=True)
-                if exp == '1':
-                    if len(df_response) != 108:
-                        print(subject, run, len(df_response))
-                elif exp == '2':
-                    if len(df_response) != 120:
-                        print(subject, run, len(df_response))
-
                 df_stim['subject'] = subject
                 df_stim['run'] = run
                 df_stim['experiment'] = 'CON' + exp

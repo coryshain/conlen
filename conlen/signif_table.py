@@ -15,7 +15,7 @@ def pretty_table(row_collection, key_list, field_sep=' '):
             for row in row_collection])
 
 def csv_table(row_collection, key_list):
-    return '\n'.join([','.join(z) for z in (key_list + [[str(x[y]) for y in key_list] for x in row_collection])])
+    return '\n'.join([','.join(z) for z in ([[str(x[y]) for y in key_list] for x in row_collection])])
 
 def compute_row(path, stars=True):
     experiment = re.search('nlength_con(.)', path).group(1)

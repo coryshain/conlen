@@ -24,7 +24,10 @@ ling_baselines = [
     ['totsurp'],
     ['dltcvm'],
     ['dlts'],
-    ['PMI']
+    ['PMI'],
+    ['noF'],
+    ['noFlen'],
+    ['noFlenlog1p']
 ]
 
 cols = {

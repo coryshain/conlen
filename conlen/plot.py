@@ -23,10 +23,10 @@ if __name__ == '__main__':
     ''')
     args = argparser.parse_args()
 
-    PLOT_ITEMS = True
-    PLOT_LING = True
-    PLOT_BAR = True
-    PLOT_LINES = True
+    PLOT_ITEMS = False
+    PLOT_LING = False
+    PLOT_BAR = False
+    PLOT_LINES = False
     DUMP_TEXT = False
 
     bar_width = 0.8
@@ -99,7 +99,9 @@ if __name__ == '__main__':
         'dlts': 'DLT (storage cost)',
         'noF': 'End of constituent',
         'noFlen': 'Length of constituent',
-        'noFlenlog1p': 'Log length of constituent'
+        'noFlenlog1p': 'Log length of constituent',
+        'opennodes': 'Open nodes',
+        'nmerged': 'Nodes merged',
     }
 
     contrast_names = {
@@ -118,6 +120,7 @@ if __name__ == '__main__':
         'isNC': 'nc',
         'isJAB': 'jab',
         'CLen': 'c-len',
+        'CLen34': 'c-len-3-4',
         'NCLen': 'nc-len',
         'JABLen': 'jab-len',
         'C>JAB': 'c > jab',
@@ -189,6 +192,180 @@ if __name__ == '__main__':
         means[pos_tag] = v['Mean'].values
         lb[pos_tag] = v['Mean'].values - v['2.5%'].values
         ub[pos_tag] =  v['97.5%'].values  - v['Mean'].values
+
+    # SWJN
+
+    df_swjn_src = pd.read_csv('data/SWJNV2_results.csv')
+    swjn_fROIs = {
+        1: 'LANGLIFGorb',
+        2: 'LANGLIFG',
+        3: 'LANGLMFG',
+        4: 'LANGLAntTemp',
+        5: 'LANGLPostTemp',
+        6: 'LANGLAngG'
+    }
+
+    df_swjn = []
+    for fROI in swjn_fROIs:
+        for contrast in ['S', 'W', 'J', 'N']:
+            vals = df_swjn_src[(df_swjn_src.ROI == fROI) & (df_swjn_src.Effect == contrast)].EffectSize.values
+            df_swjn.append((swjn_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_swjn = pd.DataFrame(df_swjn, columns=['fROI', 'contrast', 'estimate', 'err'])
+
+    # Toolbox PDD estimates
+
+    df_pdd_src = pd.read_csv('data/Nlength_con2_results.csv')
+    pdd_fROIs = {
+        1: 'LANGLIFGorb',
+        2: 'LANGLIFG',
+        3: 'LANGLMFG',
+        4: 'LANGLAntTemp',
+        5: 'LANGLPostTemp',
+        6: 'LANGLAngG'
+    }
+
+    def pdd_effect_mapper(x):
+        x = x[2:]
+        if x == '12c':
+            return 'S'
+        if x == '6c':
+            return 'c06'
+        if x == '4c':
+            return 'c04'
+        if x == '3c':
+            return 'c03'
+        if x == '2c':
+            return 'c02'
+        if x == '1c':
+            return 'W'
+        if x == '4nc':
+            return 'nc04'
+        if x == '3nc':
+            return 'nc03'
+        if x == 'jab12c':
+            return 'J'
+        if x == 'jab4c':
+            return 'jab-c04'
+        if x == 'jab1c':
+            return 'N'
+        raise ValueError('Unrecognized value %s in PDD mapper fn' % x)
+
+
+    df_pdd_src['Condition'] = df_pdd_src.Effect.apply(pdd_effect_mapper)
+    df_pdd_src = df_pdd_src.groupby(['Subject', 'ROI', 'Condition']).mean().reset_index()
+    df_pdd_src = df_pdd_src[df_pdd_src.ROI < 7]
+
+    df_pdd = []
+    for fROI in pdd_fROIs:
+        for contrast in ['S', 'W', 'J', 'N']:
+            vals = df_pdd_src[(df_pdd_src.ROI == fROI) & (df_pdd_src.Condition == contrast)].EffectSize.values
+            df_pdd.append((pdd_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_pdd = pd.DataFrame(df_pdd, columns=['fROI', 'contrast', 'estimate', 'err'])
+
+
+
+    # Plotting
+
+
+    # PDD vs SWJN
+
+    fig = plt.figure(figsize=((11, 5.8)))
+    h = [Size.Fixed(0.7), Size.Fixed(10.3)]
+    v = [Size.Fixed(1.1), Size.Fixed(4.5)]
+    divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+    ax = fig.add_axes(
+        divider.get_position(),
+        axes_locator=divider.new_locator(nx=1, ny=1)
+    )
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(True)
+    ax.tick_params(labelleft='on', labelbottom='off')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3, zorder=1)
+    ax.axhline(y=0, lw=1, c='gray', alpha=1, zorder=2)
+
+    color = [
+        # S
+        (137, 69, 246, 255),
+
+        # W
+        (14, 60, 245, 255),
+
+        # J
+        (235, 63, 37, 255),
+
+        # N
+        (192, 192, 192, 255)
+    ]
+    color = [tuple([float(x) / 255 for x in y]) for y in color]
+
+    bar_width = 1./8 * 0.8
+    contrasts = ['S', 'W', 'J', 'N']
+
+    for i in range(1, 6):
+        ax.axvline(x=i - bar_width, lw=1, c='gray', alpha=1, zorder=2)
+
+    r_base = np.arange(6)
+    for i in range(8):
+        j = i % 4
+        # if i % 2 == 0:
+        if i < 4:
+            _df = df_swjn
+        else:
+            _df = df_pdd
+        contrast = contrasts[j]
+        df = []
+        df.append(_df[(_df.contrast == contrast) & (_df.fROI != 'all')])
+        df = pd.concat(df, axis=0)
+        df = df.to_dict('records')
+        df = sorted(df, key=lambda x: {'LANGLIFGorb': 1, 'LANGLIFG': 2, 'LANGLMFG': 3, 'LANGLAntTemp': 4, 'LANGLPostTemp': 5, 'LANGLAngG': 6}[x['fROI']])
+        df = pd.DataFrame(df)
+        r = r_base + i * bar_width + (i // 4) * 0.1
+
+        estimates = df.estimate.values
+        errors = df.err.values
+
+        # # 3.42 is ~ratio of HRF integrals in pyMVPA vs SPM
+        # estimates /= 3.42
+        # errors /= 3.42
+
+        ax.bar(
+            r,
+            estimates,
+            color=color[j],
+            width=bar_width,
+            label=contrast if i < 4 else None,
+            linewidth=2,
+            # linestyle='solid' if (i % 2 == 0) else 'dashed'
+        )
+
+        ax.errorbar(
+            r,
+            estimates,
+            yerr=errors,
+            fmt='none',
+            ecolor=color[j],
+            capsize=4,
+            capthick=2,
+            linewidth=2
+        )
+
+    ax.legend(loc='upper right', ncol=4)
+
+    ax.set_xticks(np.arange(0, 6, 0.5) + 0.125)
+    ax.set_xticklabels(['F. et al (2010)', 'Current Study'] * 6, rotation=45, ha='right')
+    # ax.set_ylabel('BOLD')
+    ax.set_ylim(-1.37, 6)
+
+    plt.savefig('output/conlen/plots/PDD_SWJN.png')
+
+
+
+    # POS
+
 
     fig = plt.figure(figsize=(10,3.1))
     h = [Size.Fixed(1.0), Size.Fixed(6)]
@@ -707,7 +884,6 @@ if __name__ == '__main__':
             if fROI not in by_froi[ling]:
                 by_froi[ling][fROI] = []
             contrasts_cur = v.copy()
-            contrasts_cur = contrasts_cur[~contrasts_cur.contrast.isin(['isC34', 'isC1412', 'CLen34', 'CLen1412'])]
             if names is None:
                 names = contrasts_cur.contrast.to_list()
 
@@ -1337,14 +1513,7 @@ if __name__ == '__main__':
                 plot_data[experiment][baseline][ling] = _df
 
     if PLOT_LINES:
-        # frois = [
-        #     'LANGLMFG',
-        #     'LANGLAntTemp',
-        #     'LANGLPostTemp',
-        #     'LANGLAngG',
-        #     'LANGLIFGorb',
-        #     'LANGLIFG'
-        # ]
+        # Real-words vs Jabberwocky
 
         fROIs.append('all')
 
@@ -1506,13 +1675,130 @@ if __name__ == '__main__':
 
         plt.close('all')
 
+        # Real-words vs non-constituents
+
+        tick_labels = [
+            'c03',
+            'c04'
+        ]
+
+        fig = plt.figure(figsize=((12.5, 4)))
+        axes = []
+        for i in range(6):
+            h = [Size.Fixed(0.5 + (i % 6) * 2), Size.Fixed(1.4)]
+            v = [Size.Fixed(1), Size.Fixed(2.5)]
+            divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+            ax = fig.add_axes(
+                divider.get_position(),
+                axes_locator=divider.new_locator(nx=1, ny=1)
+            )
+            axes.append((fROIs[i % 6], ax))
+
+        for i, (fROI, ax) in enumerate(axes):
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(True)
+            ax.spines['left'].set_visible(True)
+            ax.tick_params(labelleft='on', labelbottom='on')
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('bottom')
+            # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3)
+            ax.axhline(y=0, lw=1, c='gray', alpha=1)
+
+            conditions = [
+                'c03',
+                'c04',
+            ]
+
+            x = np.arange(2)
+            y = plot_data['2']['none']['none']
+            y = y[y.contrast.isin(conditions) & (y.fROI == fROI)]
+            estimate = y.estimate.values
+            err = y.err.values
+            b = np.linalg.lstsq(np.stack([np.ones_like(x), x], axis=1), estimate)[0]
+            xline = np.linspace(0, 1, 500)
+            X = np.stack([np.ones_like(xline), xline], axis=1)
+            yline = np.dot(X, b)
+
+            ax.errorbar(
+                x,
+                estimate,
+                yerr=err,
+                fmt='ro',
+                linestyle='none',
+                ecolor='red',
+                lw=2,
+                capsize=0,
+                label='constituent'
+            )
+            ax.plot(
+                xline,
+                yline,
+                linestyle='dashed',
+                color='red'
+            )
+
+            conditions = [
+                'nc03',
+                'nc04',
+            ]
+
+            y = plot_data['2']['none']['none']
+            y = y[y.contrast.isin(conditions) & (y.fROI == fROI)]
+            estimate = y.estimate.values
+            err = y.err.values
+            b = np.linalg.lstsq(np.stack([np.ones_like(x), x], axis=1), estimate)[0]
+            xline = np.linspace(0, 1, 500)
+            X = np.stack([np.ones_like(xline), xline], axis=1)
+            yline = np.dot(X, b)
+
+            ax.errorbar(
+                x,
+                estimate,
+                yerr=err,
+                fmt='mx',
+                linestyle='none',
+                fillstyle='none',
+                ecolor='m',
+                lw=2,
+                capsize=0,
+                label='non-constituent'
+            )
+            ax.plot(
+                xline,
+                yline,
+                linestyle='dashed',
+                color='m'
+            )
+
+            if i == 2:
+                # get handles
+                handles, labels = ax.get_legend_handles_labels()
+                # remove the errorbars
+                handles = [h[0] for h in handles]
+                # use them in the legend
+                ax.legend(handles, labels, loc='lower center', numpoints=1, frameon=False, bbox_to_anchor=(1.1, -0.35),
+                          ncol=2)
+
+            ax.set_xticks(np.arange(2))
+            ax.set_xticklabels(tick_labels, rotation=rotation, ha='right')
+            ax.set_ylim((-0.2, 1))
+
+        if not os.path.exists('output/conlen/plots'):
+            os.makedirs('output/conlen/plots')
+        plt.savefig('output/conlen/plots/nc.png')
+
+        plt.close('all')
+
 
 
     # Interactions
 
-    fig = plt.figure(figsize=((14, 3.5)))
+    # Main result
+
+    fig = plt.figure(figsize=((14, 4.5)))
     h = [Size.Fixed(0.7), Size.Fixed(13.3)]
-    v = [Size.Fixed(0.5), Size.Fixed(3)]
+    v = [Size.Fixed(0.5), Size.Fixed(3.7)]
     divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
     ax = fig.add_axes(
         divider.get_position(),
@@ -1582,5 +1868,82 @@ if __name__ == '__main__':
     ax.set_xticks(r_base + 0.25)
     ax.set_xticklabels(contrasts_renamed, rotation=rotation, ha='right')
     # ax.set_ylabel('BOLD')
+    ax.set_ylim(0, 7)
 
     plt.savefig('output/conlen/plots/overall.png')
+
+    # Non-constituents
+
+    fig = plt.figure(figsize=((11, 4.5)))
+    h = [Size.Fixed(0.7), Size.Fixed(10.3)]
+    v = [Size.Fixed(0.5), Size.Fixed(3.7)]
+    divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+    ax = fig.add_axes(
+        divider.get_position(),
+        axes_locator=divider.new_locator(nx=1, ny=1)
+    )
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(True)
+    ax.tick_params(labelleft='on', labelbottom='off')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3, zorder=1)
+    ax.axhline(y=0, lw=1, c='gray', alpha=1, zorder=2)
+
+    contrasts = ['c-len-3-4', 'nc-len', 'c > nc', 'c-len > nc-len']
+    contrasts_renamed = [''] * 4
+
+    r_base = np.arange(len(contrasts_renamed))
+    bar_width = 1./6 * 0.5
+    cmap = plt.get_cmap('viridis')
+    hatches = [
+        None,
+        '\\\\\\\\',
+        '||||',
+        '----',
+        '....',
+        'xxxx',
+        '++++'
+    ]
+
+    for i, fROI in enumerate(['all'] + fROIs[:6]):
+        r = r_base + i * bar_width
+        df = []
+        _df = plot_data['2']['none']['none']
+        df.append(_df[(_df.contrast.isin(contrasts)) & (_df.fROI == fROI)])
+        df = pd.concat(df, axis=0)
+        df.contrast = contrasts_renamed
+        hatch = hatches[i]
+
+        ax.bar(
+            r,
+            df.estimate.values,
+            color='w',
+            edgecolor=(0.6, 0.6, 0.6),
+            width=bar_width,
+            label='Overall' if fROI == 'all' else fROI[4:],
+            hatch=hatch,
+            linewidth=2
+        )
+
+        ax.errorbar(
+            r,
+            df.estimate.values,
+            yerr=df.err.values,
+            fmt='none',
+            ecolor=(0.8, 0.8, 0.8),
+            capsize=4,
+            capthick=2,
+            linewidth=2
+        )
+
+    ax.legend(loc='upper right', ncol=4)
+
+    ax.set_xticks(r_base + 0.25)
+    ax.set_xticklabels(contrasts_renamed, rotation=rotation, ha='right')
+    # ax.set_ylabel('BOLD')
+    ax.set_ylim(-1, 6)
+
+    plt.savefig('output/conlen/plots/nc-overall.png')

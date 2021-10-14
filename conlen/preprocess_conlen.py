@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy.io as io
 from conlen.hrf import hrf_convolve
+from conlen.tree import Tree
 
 regnum = re.compile('(.+)_region([0-9]+)')
 runnum = re.compile('run([0-9]+)')
@@ -139,6 +140,27 @@ def get_docid(x):
         return 'FIX'
     return x.condcode + str(x.itemnum)
 
+def get_nelson_scores(t, pending=0, processed=0, closed=0):
+    assert len(t.ch) < 3, 'Non-binary tree. %s' % t
+    n_pending = []
+    n_closed = []
+    opennodes = []
+    if len(t.ch):
+        for i, ch in enumerate(t.ch):
+            _n_pending, _n_closed, _opennodes = get_nelson_scores(ch, pending=pending, processed=processed, closed=closed + ((i==1) and (len(t.ch[0].ch) > 1)))
+            pending += len(_n_pending)
+            if len(_n_pending) > 1:
+                processed += len(_n_pending)
+            n_pending += _n_pending
+            n_closed += _n_closed
+            opennodes += _opennodes
+    else:
+        n_pending = [pending - processed + 1]
+        n_closed = [closed]
+        opennodes = [pending - processed + 1 + closed]
+
+    return n_pending, n_closed, opennodes
+
 hemispheres = ['L', 'R']
 
 language_roi_src = [
@@ -227,7 +249,10 @@ ling_preds = [
     'noFlenlog1p',
     'noFdr',
     'noFdrv',
-    'yesJ'
+    'yesJ',
+    'embddepthMin',
+    'opennodes',
+    'nmerged'
 ]
 
 ling_preds_full = ling_preds + ['PMI']
@@ -254,7 +279,10 @@ ling_preds_nojab = [
     'noFlenlog1p',
     'noFdr',
     'noFdrv',
-    'yesJ'
+    'yesJ',
+    'embddepthMin',
+    'opennodes',
+    'nmerged'
 ]
 
 conlen_itemmeasures = pd.read_csv(
@@ -262,12 +290,41 @@ conlen_itemmeasures = pd.read_csv(
     sep=' '
 )
 conlen_itemmeasures['noFlenlog1p'] = np.log(conlen_itemmeasures['noFlen'].values + 1)
+
+pending = []
+closed = []
+opennodes = []
+nmerged = []
+t = Tree()
+with open('data/conlenc.gold.linetrees', 'r') as f:
+    for line in f.readlines():
+        t.read(line)
+        t.collapseUnary()
+        _pending, _closed, _opennodes = get_nelson_scores(t)
+        opennodes += _opennodes
+        _pending.append(0)
+        _nmerged = [max(x - y + 1, 0) for x, y in zip(_pending[:-1], _pending[1:])]
+        nmerged += _nmerged
+
+opennodes_df = np.ones(len(conlen_itemmeasures), dtype=int)
+opennodes_df[:len(opennodes)] = opennodes
+conlen_itemmeasures['opennodes'] = opennodes_df
+nmerged_df = np.zeros(len(conlen_itemmeasures), dtype=int)
+nmerged_df[:len(opennodes)] = nmerged
+conlen_itemmeasures['nmerged'] = nmerged_df
+
+
 conlen_itemmeasures = conlen_itemmeasures[ling_preds]
 conlen_itemmeasures.loc[conlen_itemmeasures.cond == 'JAB', ling_preds_nojab] = 0
 conlen_itemmeasures = pd.merge(conlen_itemmeasures, df_pmi[['PMI', 'docid', 'sentpos', 'cond', 'conlen', 'condcode']],
                                how='left', on=['docid', 'sentpos', 'cond', 'conlen', 'condcode'])
 conlen_itemmeasures = conlen_itemmeasures.fillna(0.)
 conlen_itemmeasures['itempos'] = conlen_itemmeasures.groupby('docid').cumcount() + 1
+conlen_itemmeasures['chunkpos'] = (conlen_itemmeasures.groupby('docid').cumcount()) % conlen_itemmeasures['conlen'] + 1
+conlen_itemmeasures['chunkstart'] = ((conlen_itemmeasures['chunkpos'] - conlen_itemmeasures['chunkpos'].shift()) != 1)
+conlen_itemmeasures['chunkid'] = conlen_itemmeasures['chunkstart'].cumsum()
+
+del conlen_itemmeasures['chunkstart']
 
 means = conlen_itemmeasures[ling_preds_nojab + ['docid']].groupby(['docid']).mean().reset_index()
 means.columns = [x if x == 'docid' else x + 'Mean' for x in means.columns]

@@ -98,7 +98,7 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser('''
     Get table of significance values for conlen tests.
     ''')
-    argparser.add_argument('-c', '--csv', action='store_true', help='Print output as CSV. Otherwise pretty print')
+    argparser.add_argument('-p', '--pretty_print', action='store_true', help='Pretty print. Otherwise print to CSV.')
     argparser.add_argument('-s', '--stars', action='store_true', help='Include significance stars')
     args = argparser.parse_args()
     cols = ['experiment', 'baseline', 'contrast', 'fROI', 'conv', 'sing', 'beta', 'se', 't', 'p']
@@ -111,9 +111,8 @@ if __name__ == '__main__':
     rows = sorted(rows, key=lambda x: (x['baseline'], len(x['contrast']), x['contrast'].split('!')[0]))
     rows.insert(0, {c:c for c in cols})
 
-    if args.csv:
-        sys.stdout.write(csv_table(rows, cols) + '\n')
-    else:
-        sys.stdout.write(pretty_table(rows, cols) + '\n')
-    sys.stdout.flush()
-
+    with open('output/conlen/signif.csv', 'w') as f:
+        if args.pretty_print:
+            f.write(pretty_table(rows, cols) + '\n')
+        else:
+            f.write(csv_table(rows, cols) + '\n')

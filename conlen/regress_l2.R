@@ -64,7 +64,7 @@ for (experiment in c(1, 2)) {
                         }
                     }
 
-                    if (b == 'none' | substr(b, 0, 3) %in% c('dlt', 'noF')) {
+                    if (b == 'none' | substr(b, 0, 3) %in% c('dlt', 'noF', 'ope', 'nme')) {
                         df_ = df[(df$contrast == contrast) & (df$ling == 'none'),]
                         if (fROI == 'allfROI') {
                             m = lmer(mform, REML=F, data=df_)
@@ -113,7 +113,7 @@ for (experiment in c(1, 2)) {
                             }
                         }
 
-                        if (b == 'none' | substr(b, 0, 3) %in% c('dlt', 'noF')) {
+                        if (b == 'none' | substr(b, 0, 3) %in% c('dlt', 'noF', 'ope', 'nme')) {
                             df_ = df[(df$contrast %in% interaction) & (df$ling == 'none'),]
                             if (fROI == 'allfROI') {
                                 m = lmer(mform, REML=F, data=df_)

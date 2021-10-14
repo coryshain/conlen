@@ -27,7 +27,9 @@ ling_baselines = [
     ['PMI'],
     ['noF'],
     ['noFlen'],
-    ['noFlenlog1p']
+    ['noFlenlog1p'],
+    ['opennodes'],
+    ['nmerged']
 ]
 
 cols = {

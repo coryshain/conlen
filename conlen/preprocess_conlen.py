@@ -324,11 +324,16 @@ conlen_itemmeasures['chunkpos'] = (conlen_itemmeasures.groupby('docid').cumcount
 conlen_itemmeasures['chunkstart'] = ((conlen_itemmeasures['chunkpos'] - conlen_itemmeasures['chunkpos'].shift()) != 1)
 conlen_itemmeasures['chunkid'] = conlen_itemmeasures['chunkstart'].cumsum()
 
-del conlen_itemmeasures['chunkstart']
-
 means = conlen_itemmeasures[ling_preds_nojab + ['docid']].groupby(['docid']).mean().reset_index()
 means.columns = [x if x == 'docid' else x + 'Mean' for x in means.columns]
 conlen_itemmeasures = pd.merge(conlen_itemmeasures, means, on='docid', how='left')
+
+for pos in sorted(list(conlen_itemmeasures['sentpos'].unique())):
+    try:
+        pos = int(pos)
+        conlen_itemmeasures['isSentPos%s' % pos] = (conlen_itemmeasures.sentpos == pos).astype(int)
+    except ValueError:
+        pass
 
 for exp in ['1', '2']:
     cl_beh_path = 'timecourses/Nlength_con%s/' % exp
@@ -493,6 +498,15 @@ for exp in ['1', '2']:
             stim['isJABLen%d%s' % (length, ling_pred)] = stim['isJABLen%d' % length] * stim[ling_pred]
     stim['isCLen'] = stim['isC'] * stim['conlen']
 
+    for pos in sorted(list(conlen_itemmeasures['sentpos'].unique())):
+        try:
+            pos = int(pos)
+            stim['isCSentPos%s' % pos] = stim['isC'] * stim['isSentPos%s' % pos]
+            stim['isNCSentPos%s' % pos] = stim['isNC'] * stim['isSentPos%s' % pos]
+            stim['isJABSentPos%s' % pos] = stim['isJAB'] * stim['isSentPos%s' % pos]
+        except ValueError:
+            pass
+
     loglen = np.where(stim['conlen'] > 0, np.log(stim['conlen']), 0)
 
     stim['isCLogLen'] = stim['isC'] * loglen
@@ -506,7 +520,7 @@ for exp in ['1', '2']:
 
     print('Saving word-by-word data...')
 
-    conlen_itemmeasures.to_csv('word-by-word_measures/conlen%s.itemmeasures' % (exp, exp), sep=' ', na_rep='NaN', index=False)
+    conlen_itemmeasures.to_csv('word-by-word_measures/conlen%s.itemmeasures' % exp, sep=' ', na_rep='NaN', index=False)
 
     stim_key_cols = ['subject', 'run', 'experiment']
     res_key_cols = ['subject', 'run', 'experiment', 'fROI']
@@ -555,4 +569,4 @@ for exp in ['1', '2']:
     print('Saving long LANG data...')
 
     hrf_long_lang = hrf_long[hrf_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
-    hrf_long_lang.to_csv('timecourses/conlen%sfmri_hrf_long_lang.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
+    hrf_long_lang.to_csv('timecourses/conlen%sfmri_hrf_long_lang.csv' % exp, sep=' ', na_rep='NaN', index=False)

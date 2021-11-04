@@ -12,11 +12,7 @@ The processing pipeline follows the following steps:
 5. Statistically test second-level models
 
 Each of these steps is supported by scripts in this codebase. In practice, SPM preprocessing and step 1 are skipped in
-this readme and the outputs of step 1 are shared on OSF (see **Data** below). This is because the raw, intermediate,
-and final preprocessed matlab files from SPM are quite large. SPM preprocessing scripts are shared on OSF, and
-tabular data can be extracted from the preprocessed matlab files using `conlen/preprocess_conlen.py`. Additional
-source data to reproduce any of these preprocessing steps can be provided upon request.
-
+this readme and the outputs of step 1 are shared on OSF (see **Data** below).
 ## Installation
 
 Install [anaconda](https://www.anaconda.com/), then run the following commands from this repository root to create and 
@@ -37,10 +33,23 @@ The `conlen` environment must first be activated anytime you want to use this co
 
     conda activate conlen
 
+
 ## Data
 
 Data are not distributed with this repository but can be downloaded from [OSF](https://osf.io/7pknb/).
 Once downloaded, all directories from OSF should be placed at the root of this repository.
+
+We currently only distribute preprocessed tabular fMRI timecourses because the raw, intermediate, and final preprocessed
+matlab files from SPM are quite large. However, we have provided the preprocessing scripts we used, and we can provide
+source data upon request.
+
+A matlab script that preprocesses the raw fMRI is provided in `matlab/preprocessCONN.m`, and a matlab script that
+extracts functionally localized timecourses by fROI is provided in `matlab/extract_ts.m`. As written, these scripts
+will not run out of the box because they are embedded in the EvLab file structure and software environment. The paths
+in the scripts will need to be modified according to your system's file structure.
+
+Tabular data were extracted from the preprocessed matlab files using `conlen/preprocess_conlen.py`.
+
 
 ## Core Usage
 
@@ -73,6 +82,7 @@ The primary outputs are `output/signif_main.csv` and `output/signif_ling_diff.cs
 contain FDR-corrected significance values for the critical comparisons and modulation of those comparisons
 by linguistic variables.
     
+
 ## Additional Utilities
 
 Generate statistics for the language localizer used in this study as follows:

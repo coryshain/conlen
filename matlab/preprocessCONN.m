@@ -7,7 +7,7 @@ parcelNames = {'Language01_LH_IFGorb'};
 
 ssStruct=struct();
 nSubj=0;
-for f = dir(expt_dir)'
+for f = dir(expt_dir)
     if ~strcmp(f.name(1),'.')
         nSubj=nSubj+1;
         ssStruct(nSubj).ssID=fullfile(f.folder,f.name);

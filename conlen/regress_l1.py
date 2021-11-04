@@ -64,7 +64,7 @@ if __name__ == '__main__':
     for experiment in ['1', '2']:
         print('Reading experiment %s data...' % experiment)
 
-        df = pd.read_csv('output/conlen/nlength_con%s/conlen%sfmri_hrf_long_lang.csv' % (experiment, experiment), sep=' ')
+        df = pd.read_csv('timecourses/conlen%sfmri_hrf_long_lang.csv' % experiment, sep=' ')
 
         print('Fitting GLM...')
         for baseline in ling_baselines:

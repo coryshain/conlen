@@ -23,10 +23,10 @@ if __name__ == '__main__':
     ''')
     args = argparser.parse_args()
 
-    PLOT_ITEMS = False
-    PLOT_LING = False
+    PLOT_ITEMS = True
+    PLOT_LING = True
     PLOT_BAR = False
-    PLOT_LINES = False
+    PLOT_LINES = True
     DUMP_TEXT = False
 
     bar_width = 0.8
@@ -171,6 +171,18 @@ if __name__ == '__main__':
         'isJABLen12': 'c12',
     }
 
+    cond2len_name2 = {
+        'A_12c': 'c12',
+        'B_6c': 'c06',
+        'C_4c': 'c04',
+        'E_3c': 'c03',
+        'G_2c': 'c02',
+        'H_1c': 'c01',
+        'I_jab12c': 'jab-c12',
+        'J_jab4c': 'jab-c04',
+        'K_jab1c': 'jab-c01',
+    }
+
 
     # Items
 
@@ -183,7 +195,7 @@ if __name__ == '__main__':
     # PoS
 
     prefix = 'output/conlen/'
-    pos = pd.read_csv('data/conlen/pos.csv')
+    pos = pd.read_csv('plot_data/pos.csv')
     means = {}
     lb = {}
     ub = {}
@@ -193,9 +205,8 @@ if __name__ == '__main__':
         lb[pos_tag] = v['Mean'].values - v['2.5%'].values
         ub[pos_tag] =  v['97.5%'].values  - v['Mean'].values
 
-    # SWJN
+    # SWJN1
 
-    df_swjn_src = pd.read_csv('data/SWJNV2_results.csv')
     swjn_fROIs = {
         1: 'LANGLIFGorb',
         2: 'LANGLIFG',
@@ -205,16 +216,56 @@ if __name__ == '__main__':
         6: 'LANGLAngG'
     }
 
-    df_swjn = []
+    df_swjn1_src = pd.read_csv('plot_data/SWJNV1_results.csv', sep=', *')
+    df_swjn1 = []
     for fROI in swjn_fROIs:
         for contrast in ['S', 'W', 'J', 'N']:
-            vals = df_swjn_src[(df_swjn_src.ROI == fROI) & (df_swjn_src.Effect == contrast)].EffectSize.values
-            df_swjn.append((swjn_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
-    df_swjn = pd.DataFrame(df_swjn, columns=['fROI', 'contrast', 'estimate', 'err'])
+            vals = df_swjn1_src[(df_swjn1_src.ROI == fROI) & (df_swjn1_src.Effect == contrast)].EffectSize.values
+            df_swjn1.append((swjn_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_swjn1 = pd.DataFrame(df_swjn1, columns=['fROI', 'contrast', 'estimate', 'err'])
+
+    # SWJN2
+
+    df_swjn2_src = pd.read_csv('plot_data/SWJNV2_results.csv')
+    df_swjn2 = []
+    for fROI in swjn_fROIs:
+        for contrast in ['S', 'W', 'J', 'N']:
+            vals = df_swjn2_src[(df_swjn2_src.ROI == fROI) & (df_swjn2_src.Effect == contrast)].EffectSize.values
+            df_swjn2.append((swjn_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_swjn2 = pd.DataFrame(df_swjn2, columns=['fROI', 'contrast', 'estimate', 'err'])
+
+    # Localizer FED parcels
+
+    loc_fROIs = {
+        1: 'LANGLIFGorb',
+        2: 'LANGLIFG',
+        3: 'LANGLAntTemp',
+        4: 'LANGLPostTemp',
+        5: 'LANGLAngG'
+    }
+    df_fed_loc_src = pd.read_csv('parcel_comparison_data/spm_ss_mROI_data.conlen2_fed.csv', sep=', *')
+    df_fed_loc_src.Effect = df_fed_loc_src.Effect.map(cond2len_name2)
+    df_fed_loc = []
+    for fROI in loc_fROIs:
+        for contrast in ['c01', 'c02', 'c03', 'c04', 'c06', 'c12', 'jab-c01', 'jab-c04', 'jab-c12']:
+            vals = df_fed_loc_src[(df_fed_loc_src.ROI == fROI) & (df_fed_loc_src.Effect == contrast)].EffectSize.values
+            df_fed_loc.append((loc_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_fed_loc = pd.DataFrame(df_fed_loc, columns=['fROI', 'contrast', 'estimate', 'err'])
+
+    # Localizer PDD parcels
+
+    df_pdd_loc_src = pd.read_csv('parcel_comparison_data/spm_ss_mROI_data.conlen2_pdd.csv', sep=', *')
+    df_pdd_loc_src.Effect = df_pdd_loc_src.Effect.map(cond2len_name2)
+    df_pdd_loc = []
+    for fROI in loc_fROIs:
+        for contrast in ['c01', 'c02', 'c03', 'c04', 'c06', 'c12', 'jab-c01', 'jab-c04', 'jab-c12']:
+            vals = df_pdd_loc_src[(df_pdd_loc_src.ROI == fROI) & (df_pdd_loc_src.Effect == contrast)].EffectSize.values
+            df_pdd_loc.append((loc_fROIs[fROI], contrast, vals.mean(), vals.std(axis=0) / np.sqrt(len(vals))))
+    df_pdd_loc = pd.DataFrame(df_pdd_loc, columns=['fROI', 'contrast', 'estimate', 'err'])
 
     # Toolbox PDD estimates
 
-    df_pdd_src = pd.read_csv('data/Nlength_con2_results.csv')
+    df_pdd_src = pd.read_csv('plot_data/Nlength_con2_results.csv')
     pdd_fROIs = {
         1: 'LANGLIFGorb',
         2: 'LANGLIFG',
@@ -269,9 +320,9 @@ if __name__ == '__main__':
 
     # PDD vs SWJN
 
-    fig = plt.figure(figsize=((11, 5.8)))
+    fig = plt.figure(figsize=((13, 6.2)))
     h = [Size.Fixed(0.7), Size.Fixed(10.3)]
-    v = [Size.Fixed(1.1), Size.Fixed(4.5)]
+    v = [Size.Fixed(1.5), Size.Fixed(4.1)]
     divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
     ax = fig.add_axes(
         divider.get_position(),
@@ -302,20 +353,22 @@ if __name__ == '__main__':
     ]
     color = [tuple([float(x) / 255 for x in y]) for y in color]
 
-    bar_width = 1./8 * 0.8
+    bar_width = 1./12 * 0.7
     contrasts = ['S', 'W', 'J', 'N']
 
     for i in range(1, 6):
-        ax.axvline(x=i - bar_width, lw=1, c='gray', alpha=1, zorder=2)
+        ax.axvline(x=i - (1.5 * bar_width), lw=1, c='gray', alpha=1, zorder=2)
 
     r_base = np.arange(6)
-    for i in range(8):
+    for i in range(12):
         j = i % 4
         # if i % 2 == 0:
         if i < 4:
-            _df = df_swjn
-        else:
+            _df = df_swjn1
+        elif i >= 8:
             _df = df_pdd
+        else:
+            _df = df_swjn2
         contrast = contrasts[j]
         df = []
         df.append(_df[(_df.contrast == contrast) & (_df.fROI != 'all')])
@@ -348,19 +401,118 @@ if __name__ == '__main__':
             yerr=errors,
             fmt='none',
             ecolor=color[j],
-            capsize=4,
+            capsize=2,
             capthick=2,
             linewidth=2
         )
 
-    ax.legend(loc='upper right', ncol=4)
+    ax.legend(loc='center left', ncol=1, bbox_to_anchor=(1, 0.5))
 
-    ax.set_xticks(np.arange(0, 6, 0.5) + 0.125)
-    ax.set_xticklabels(['F. et al (2010)', 'Current Study'] * 6, rotation=45, ha='right')
+    ax.set_xticks(np.arange(0, 5.9, 0.3333333) + bar_width * 1.5)
+    ax.set_xticklabels(['F. et al (2010) Exp1', 'F. et al (2010) Exp2', 'Current Study'] * 6, rotation=45, ha='right')
     # ax.set_ylabel('BOLD')
     ax.set_ylim(-1.37, 6)
 
     plt.savefig('output/conlen/plots/PDD_SWJN.png')
+
+
+
+    # FED vs PDD parcels
+
+    fig = plt.figure(figsize=((13, 6.2)))
+    h = [Size.Fixed(0.7), Size.Fixed(10.3)]
+    v = [Size.Fixed(1.5), Size.Fixed(4.1)]
+    divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+    ax = fig.add_axes(
+        divider.get_position(),
+        axes_locator=divider.new_locator(nx=1, ny=1)
+    )
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(True)
+    ax.tick_params(labelleft='on', labelbottom='off')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3, zorder=1)
+    ax.axhline(y=0, lw=1, c='gray', alpha=1, zorder=2)
+
+    color = [
+        # C
+        (240, 202, 0, 255),
+        (246, 158, 0, 255),
+        (250, 122, 0, 255),
+        (252, 90, 0, 255),
+        (252, 66, 0, 255),
+        (253,42,0,255),
+
+        # JAB
+        (222, 153, 255, 255),
+        (175, 133, 238, 255),
+        (160, 82, 202, 255),
+    ]
+    color = [tuple([float(x) / 255 for x in y]) for y in color]
+
+    bar_width = 1./18 * 0.8
+    contrasts = ['c01', 'c02', 'c03', 'c04', 'c06', 'c12', 'jab-c01', 'jab-c04', 'jab-c12']
+
+    for i in range(1, 5):
+        ax.axvline(x=i - 1.5 * bar_width, lw=1, c='gray', alpha=1, zorder=2)
+
+    r_base = np.arange(5)
+    for i in range(18):
+        j = i % 9
+        # if i % 2 == 0:
+        if i < 9:
+            _df = df_pdd_loc
+        else:
+            _df = df_fed_loc
+        contrast = contrasts[j]
+        df = []
+        df.append(_df[(_df.contrast == contrast) & (_df.fROI != 'all')])
+        df = pd.concat(df, axis=0)
+        df = df.to_dict('records')
+        df = sorted(df, key=lambda x: {'LANGLIFGorb': 1, 'LANGLIFG': 2, 'LANGLAntTemp': 3, 'LANGLPostTemp': 4, 'LANGLAngG': 5}[x['fROI']])
+        df = pd.DataFrame(df)
+        r = r_base + i * bar_width + (i // 9) * 0.1
+
+        estimates = df.estimate.values
+        errors = df.err.values
+
+        # # 3.42 is ~ratio of HRF integrals in pyMVPA vs SPM
+        # estimates /= 3.42
+        # errors /= 3.42
+
+        ax.bar(
+            r,
+            estimates,
+            color=color[j],
+            width=bar_width,
+            label=contrast if i < 9 else None,
+            linewidth=2,
+            # linestyle='solid' if (i % 2 == 0) else 'dashed'
+        )
+
+        ax.errorbar(
+            r,
+            estimates,
+            yerr=errors,
+            fmt='none',
+            ecolor=color[j],
+            capsize=2,
+            capthick=2,
+            linewidth=2
+        )
+
+    ax.legend(loc='center left', ncol=1, bbox_to_anchor=(1, 0.5))
+
+    ax.set_xticks(np.arange(0, 5, 0.5) + bar_width * 4)
+    ax.set_xticklabels(['PDD parcels', 'Our parcels'] * 5, rotation=45, ha='right')
+    # ax.set_ylabel('BOLD')
+    ax.set_ylim(-1.37, 6)
+
+    plt.savefig('output/conlen/plots/parcel_comparison.png')
+
 
 
 
@@ -395,7 +547,7 @@ if __name__ == '__main__':
     left = np.zeros(6)
     for i, pos_tag in enumerate(['Adjective/Adverb', 'Verb', 'Noun', 'Function Word']):
         ax.barh(
-            np.arange(6),
+            np.arange(5,-1,-1),
             means[pos_tag],
             left=left,
             # color=[get_color(x, c) for x in names],
@@ -407,7 +559,7 @@ if __name__ == '__main__':
         )
         # ax.errorbar(
         #     means[pos_tag] + left,
-        #     np.arange(6),
+        #     np.arange(5,-1,-1),
         #     xerr=np.stack([lb[pos_tag], ub[pos_tag]], axis=0),
         #     fmt='none',
         #     ecolor='black',
@@ -417,7 +569,7 @@ if __name__ == '__main__':
         # )
         left += means[pos_tag]
 
-    ax.set_yticks(np.arange(6))
+    ax.set_yticks(np.arange(5,-1,-1))
     ax.set_yticklabels(['c01', 'c02', 'c03', 'c04', 'c06', 'c12'])
     ax.legend(bbox_to_anchor=(1.05, 0.5), loc='center left')
     # ax.set_xlabel('Length Condition')
@@ -838,19 +990,19 @@ if __name__ == '__main__':
         # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3)
         # ax.axhline(y=0, lw=1, c='gray', alpha=1)
 
-        ax.bar(
-            np.arange(6),
+        ax.barh(
+            np.arange(5,-1,-1),
             np.arange(6),
             # color=[get_color(x, c) for x in names],
             color=colors_bycond,
             edgecolor='none',
             lw=1.5,
-            label=['c01', 'c02', 'c03', 'c04', 'c06', 'c12'],
+            label=['c12', 'c06', 'c04', 'c03', 'c02', 'c01'],
         )
 
         # plt.xlabel('Effect')
-        ax.set_xticks(np.arange(6) * x_width)
-        ax.set_xticklabels(['c01', 'c02', 'c03', 'c04', 'c06', 'c12'], rotation=rotation, ha='right')
+        ax.set_yticks(np.arange(5,-1,-1) * x_width)
+        ax.set_yticklabels(['c01', 'c02', 'c03', 'c04', 'c06', 'c12'], rotation=rotation, ha='right')
         # ax.set_ylabel(ling_names.get(baseline_key, baseline_key))
 
         if not os.path.exists(prefix + 'plots'):
@@ -972,8 +1124,8 @@ if __name__ == '__main__':
                 # ax.grid(b=True, which='major', axis='y', ls='--', lw=.5, c='k', alpha=.3)
                 # ax.axhline(y=0, lw=1, c='gray', alpha=1)
 
-                ax.bar(
-                    r[:clip],
+                ax.barh(
+                    r[:clip][::-1],
                     mean[:clip],
                     # color=[get_color(x, c) for x in names],
                     color=colors_bycond,
@@ -984,9 +1136,9 @@ if __name__ == '__main__':
 
                 for j, x in enumerate(names[:clip]):
                     ax.errorbar(
-                        r[j:j + 1],
                         mean[j:j + 1],
-                        yerr=err[j:j + 1],
+                        r[5-j:5-j + 1],
+                        xerr=err[j:j + 1],
                         fmt='none',
                         ecolor='black',
                         lw=2,
@@ -995,8 +1147,8 @@ if __name__ == '__main__':
                     )
 
                 # plt.xlabel('Effect')
-                ax.set_xticks(r_base[:clip] * x_width)
-                ax.set_xticklabels(names[:clip], rotation=rotation, ha='right')
+                ax.set_yticks(r_base[:clip][::-1] * x_width)
+                ax.set_yticklabels(names[:clip], rotation=rotation, ha='right')
                 # ax.set_ylabel(ling_names.get(baseline_key, baseline_key))
 
                 if not os.path.exists(prefix + 'plots'):

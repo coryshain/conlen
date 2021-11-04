@@ -3,11 +3,11 @@ import pandas as pd
 from scipy.stats import ttest_1samp
 from statsmodels.stats.multitest import fdrcorrection
 
-df1 = pd.read_csv('data/spm_ss_mROI_data.exp1.csv', sep=',\s?')
+df1 = pd.read_csv('fed10_data/spm_ss_mROI_data.exp1.csv', sep=',\s?')
 df1 = df1[df1.Effect == 'S-N']
 subj1 = {x[:3] for x in df1.Subject.unique()}
 
-df2 = pd.read_csv('data/spm_ss_mROI_data.exp2.csv', sep=',\s?')
+df2 = pd.read_csv('fed10_data/spm_ss_mROI_data.exp2.csv', sep=',\s?')
 df2 = df2[df2.Effect == 'S-N']
 subj2 = {x[:3] for x in df2.Subject.unique()}
 

@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('data/conlen/results/Nlength_con1/predictors/Constituents_Sept19-2016.csv')
+df = pd.read_csv('timecourses/results/Nlength_con1/predictors/Constituents_Sept19-2016.csv')
 df = df.to_dict('index')
 
 itemmeasures = []
@@ -36,4 +36,4 @@ itemmeasures = pd.DataFrame(
     itemmeasures,
     columns=['sentid', 'word', 'cond', 'docid', 'sentpos', 'condcode', 'itemnum', 'conlen', 'itemid']
 )
-itemmeasures.to_csv('data/conlen/results/Nlength_con1/predictors/conlen1_src.itemmeasures', sep=' ', index=False, na_rep='NaN')
+itemmeasures.to_csv('word-by-word_measures/conlen1_src.itemmeasures', sep=' ', index=False, na_rep='NaN')

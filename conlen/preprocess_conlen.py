@@ -198,7 +198,7 @@ colmap = {
     'Onsets': 'onset'
 }
 
-cl_predictor_path = 'data/conlen/ling_preds/'
+cl_predictor_path = 'word-by-word_measures/'
 
 # PMI
 df_pmi = pd.read_csv(cl_predictor_path + '/pPMI_incremental_long.csv')
@@ -296,7 +296,7 @@ closed = []
 opennodes = []
 nmerged = []
 t = Tree()
-with open('data/conlenc.gold.linetrees', 'r') as f:
+with open(cl_predictor_path + 'conlenc.gold.linetrees', 'r') as f:
     for line in f.readlines():
         t.read(line)
         t.collapseUnary()
@@ -331,10 +331,10 @@ means.columns = [x if x == 'docid' else x + 'Mean' for x in means.columns]
 conlen_itemmeasures = pd.merge(conlen_itemmeasures, means, on='docid', how='left')
 
 for exp in ['1', '2']:
-    cl_beh_path = 'data/conlen/Nlength_con%s/' % exp
-    cl_fmri_path = 'data/conlen/results/Nlength_con%s/' % exp
+    cl_beh_path = 'timecourses/Nlength_con%s/' % exp
+    cl_fmri_path = 'timecourses/results/Nlength_con%s/' % exp
     paths = [cl_fmri_path + x for x in os.listdir(cl_fmri_path) if (x.endswith('mat') and not 'sess2' in x)]
-    path_map = 'data/conlen/nlength_con%s_behavioral.csv' % exp
+    path_map = 'timecourses/nlength_con%s_behavioral.csv' % exp
 
     path_map = pd.read_csv(path_map, header=None)
     path_map = dict(zip(
@@ -504,11 +504,9 @@ for exp in ['1', '2']:
     if not os.path.exists('output/conlen/nlength_con%s' % exp):
         os.makedirs('output/conlen/nlength_con%s' % exp)
 
-    print('Saving wide data...')
+    print('Saving word-by-word data...')
 
-    conlen_itemmeasures.to_csv('output/conlen/nlength_con%s/conlen%s.itemmeasures' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-    # timeseries.to_csv('output/conlen/nlength_con%s/conlen%sfmri_bold_wide.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-    # stim.to_csv('output/conlen/nlength_con%s/conlen%sfmri_stim_wide.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
+    conlen_itemmeasures.to_csv('word-by-word_measures/conlen%s.itemmeasures' % (exp, exp), sep=' ', na_rep='NaN', index=False)
 
     stim_key_cols = ['subject', 'run', 'experiment']
     res_key_cols = ['subject', 'run', 'experiment', 'fROI']
@@ -528,7 +526,6 @@ for exp in ['1', '2']:
         value_name='BOLD'
     )
     timeseries_long.fROI = timeseries_long.fROI.apply(lambda x: x[4:])
-    # timeseries_long.to_csv('output/conlen/nlength_con%s/conlen%sfmri_bold_long.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
 
     print('Computing long stim data...')
 
@@ -554,28 +551,8 @@ for exp in ['1', '2']:
     # print('Saving long HRF data...')
 
     hrf_long = pd.concat(hrf_long, axis=0)
-    # hrf_long.to_csv('output/conlen/nlength_con%s/conlen%sfmri_hrf_long.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-
-    # print('Saving long stim data...')
-
-    # stim_long = pd.concat(stim_long, axis=0)
-    # stim_long.to_csv('output/conlen/nlength_con%s/conlen%sfmri_stim_long.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
 
     print('Saving long LANG data...')
 
-    # timeseries_long_lang = timeseries_long[timeseries_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
-    # stim_long_lang = stim_long[stim_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
     hrf_long_lang = hrf_long[hrf_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
-
-    # timeseries_long_lang.to_csv('output/conlen/nlength_con%s/conlen%sfmri_bold_long_lang.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-    # stim_long_lang.to_csv('output/conlen/nlength_con%s/conlen%sfmri_stim_long_lang.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-    hrf_long_lang.to_csv('output/conlen/nlength_con%s/conlen%sfmri_hrf_long_lang.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)
-
-
-
-
-
-
-
-
-
+    hrf_long_lang.to_csv('timecourses/conlen%sfmri_hrf_long_lang.csv' % (exp, exp), sep=' ', na_rep='NaN', index=False)

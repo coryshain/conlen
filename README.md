@@ -5,14 +5,14 @@ _Constituent length effects do not support syntactic abstraction in the
 human language network_ from preprocessed fMRI timecourses to final statistical results.
 
 The processing pipeline follows the following steps:
-1. Extract tabular data from preprocessed fMRI timecourses
+1. (Optional) Extract tabular data from preprocessed fMRI timecourses
 2. Regress first-level models to produce beta estimates for each participant
 3. Compute contrast effects using linear combinations of beta estimates from first-level models
 4. Regress mixed-effects second-level (group) models using first-level contrasts as the dependent variable
 5. Statistically test second-level models
 
-Each of these steps is supported by scripts in this codebase. In practice, SPM preprocessing and step 1 are skipped in
-this readme and the outputs of step 1 are shared on OSF (see **Data** below).
+Each of these steps is supported by scripts in this codebase.
+
 ## Installation
 
 Install [anaconda](https://www.anaconda.com/), then run the following commands from this repository root to create and 
@@ -39,19 +39,20 @@ The `conlen` environment must first be activated anytime you want to use this co
 Data are not distributed with this repository but can be downloaded from [OSF](https://osf.io/7pknb/).
 Once downloaded, all directories from OSF should be placed at the root of this repository.
 
-We currently only distribute preprocessed tabular fMRI timecourses because the raw, intermediate, and final preprocessed
-matlab files from SPM are quite large. However, we have provided the preprocessing scripts we used, and we can provide
-source data upon request.
-
-A matlab script that preprocesses the raw fMRI is provided in `matlab/preprocessCONN.m`, and a matlab script that
-extracts functionally localized timecourses by fROI is provided in `matlab/extract_ts.m`. As written, these scripts
-will not run out of the box because they are embedded in the EvLab file structure and software environment. The paths
-in the scripts will need to be modified according to your system's file structure.
-
-Tabular data were extracted from the preprocessed matlab files using `conlen/preprocess_conlen.py`.
+To protect participants' privacy, we only distribute preprocess fMRI data (the outputs of our SPM preprocessing
+pipeline). For transparency, we have included our preprocessing scripts in the `matlab` directory of this
+repository. The script used to preprocess the raw fMRI is provided in `matlab/preprocessCONN.m`, and the script that
+extracted functionally localized timecourses by fROI is provided in `matlab/extract_ts.m`.
 
 
 ## Core Usage
+
+Compile a tabular design matrix from SPM preprocessing outputs and word-by-word linguistic predictors:
+
+    python -m conlen.preprocess_conlen
+    
+This step can be time-consuming, so we have made it optional by including its outputs
+(tabular data for regressions) on OSF, allowing users to skip straight to regression.
 
 Regress first-level models as follows:
 

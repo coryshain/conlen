@@ -547,6 +547,7 @@ for exp in ['1', '2']:
     stim_dict = {x[0]:x[1] for x in stim.groupby(stim_key_cols)}
     res_keys = timeseries_long[res_key_cols].drop_duplicates().values.tolist()
     res_dict = {x[0]:x[1] for x in timeseries_long.groupby(res_key_cols)}
+    bold_long = []
     hrf_long = []
     stim_long = []
     for x in res_keys:
@@ -554,19 +555,27 @@ for exp in ['1', '2']:
 
         hrf_long_cur = hrf_dict[stim_key].copy().reset_index(drop=True)
         hrf_long_cur['fROI'] = x[-1]
-        BOLD = res_dict[tuple(x)].copy().reset_index(drop=True).BOLD
-        hrf_long_cur['BOLD'] = BOLD
+        bold_cur = res_dict[tuple(x)].copy().reset_index(drop=True)
+        bold_long.append(bold_cur)
+
+        hrf_long_cur['BOLD'] = bold_cur.BOLD
         hrf_long.append(hrf_long_cur)
 
         stim_long_cur = stim_dict[stim_key].copy()
         stim_long_cur['fROI'] = x[-1]
         stim_long.append(stim_long_cur)
 
-    # print('Saving long HRF data...')
-
+    bold_long = pd.concat(bold_long, axis=0)
     hrf_long = pd.concat(hrf_long, axis=0)
+    stim_long = pd.concat(stim_long, axis=0)
 
     print('Saving long LANG data...')
 
+    bold_long_lang = bold_long[bold_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
+    bold_long_lang.to_csv('timecourses/conlen%sfmri_bold_long_lang.csv' % exp, sep=' ', na_rep='NaN', index=False)
+
     hrf_long_lang = hrf_long[hrf_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
     hrf_long_lang.to_csv('timecourses/conlen%sfmri_hrf_long_lang.csv' % exp, sep=' ', na_rep='NaN', index=False)
+
+    stim_long_lang = stim_long[stim_long.fROI.apply(lambda x: x[4:]).isin(language_roi)]
+    stim_long_lang.to_csv('timecourses/conlen%sfmri_stim_long_lang.csv' % exp, sep=' ', na_rep='NaN', index=False)

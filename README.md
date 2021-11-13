@@ -1,8 +1,7 @@
 # fMRI_conlen
 
 This repository contains code to reproduce the analyses in Shain et al. (in prep),
-_Constituent length effects do not support syntactic abstraction in the
-human language network_ from preprocessed fMRI timecourses to final statistical results.
+_'Constituent length' effects in fMRI do not provide evidence for abstract syntactic processing_ from preprocessed fMRI timecourses to final statistical results.
 
 The processing pipeline follows the following steps:
 1. (Optional) Extract tabular data from preprocessed fMRI timecourses

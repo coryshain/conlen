@@ -38,7 +38,7 @@ The `conlen` environment must first be activated anytime you want to use this co
 Data are not distributed with this repository but can be downloaded from [OSF](https://osf.io/7pknb/).
 Once downloaded, all directories from OSF should be placed at the root of this repository.
 
-To protect participants' privacy, we only distribute preprocess fMRI data (the outputs of our SPM preprocessing
+To protect participants' privacy, we only distribute preprocessed fMRI data (the outputs of our SPM preprocessing
 pipeline). For transparency, we have included our preprocessing scripts in the `matlab` directory of this
 repository. The script used to preprocess the raw fMRI is provided in `matlab/preprocessCONN.m`, and the script that
 extracted functionally localized timecourses by fROI is provided in `matlab/extract_ts.m`.
